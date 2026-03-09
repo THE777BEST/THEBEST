@@ -1,0 +1,38 @@
+.coffee-container {
+  text-align: center;
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  margin-top: 12px;
+  padding: 20px 16px;
+}
+
+.coffee-container h3 {
+  font-size: 1.25rem;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+
+.coffee-container p {
+  font-size: 0.98rem;
+  line-height: 1.55;
+  margin-bottom: 14px;
+  color: var(--text-muted);
+}
+
+.coffee-number {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-size: 1.05rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 10px;
+  border-radius: 10px;
+  letter-spacing: 1px;
+  color: var(--text);
+}
+
+.emoji-big {
+  font-size: 2.1rem;
+  margin-bottom: 10px;
+}
