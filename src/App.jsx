@@ -112,20 +112,21 @@ function App() {
               />
             }
           />
-          <Route
-            path="/settings"
-            element={
-              <Setting
-                language={language}
-                onLanguageChange={setLanguage}
-                onThemeChange={setTheme}
-                theme={theme}
-              />
-            }
-          />
-          <Route path="/coffee" element={<Navigate replace to="/settings" />} />
-        </Routes>
-      </main>
+        <Route
+          path="/settings"
+          element={
+            <Setting
+              language={language}
+              onLanguageChange={setLanguage}
+              onThemeChange={setTheme}
+              theme={theme}
+            />
+          }
+        />
+        <Route path="/coffee" element={<Navigate replace to="/settings" />} />
+        <Route path="*" element={<Navigate replace to="/" />} />
+      </Routes>
+    </main>
       <Navbar language={language} />
     </BrowserRouter>
   );
