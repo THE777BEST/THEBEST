@@ -4,6 +4,10 @@ import "./setting.css";
 const texts = {
   en: {
     description: "Manage app appearance and language.",
+    fontSize: "Font size",
+    fontSizeLarge: "Large",
+    fontSizeMedium: "Medium",
+    fontSizeSmall: "Small",
     language: "App language",
     languageEn: "English",
     languageUz: "Uzbek",
@@ -15,6 +19,10 @@ const texts = {
   },
   uz: {
     description: "Ilova ko'rinishi va tilini sozlang.",
+    fontSize: "Shrift o'lchami",
+    fontSizeLarge: "Katta",
+    fontSizeMedium: "O'rtacha",
+    fontSizeSmall: "Kichik",
     language: "Ilova tili",
     languageEn: "Inglizcha",
     languageUz: "O'zbekcha",
@@ -27,7 +35,9 @@ const texts = {
 };
 
 export default function Setting({
+  fontSize,
   language,
+  onFontSizeChange,
   onLanguageChange,
   onThemeChange,
   theme,
@@ -62,6 +72,20 @@ export default function Setting({
         >
           <option value="uz">{t.languageUz}</option>
           <option value="en">{t.languageEn}</option>
+        </select>
+      </div>
+
+      <div className="setting-item">
+        <label htmlFor="font-size-select">{t.fontSize}</label>
+        <select
+          id="font-size-select"
+          name="font-size"
+          onChange={(e) => onFontSizeChange(e.target.value)}
+          value={fontSize}
+        >
+          <option value="small">{t.fontSizeSmall}</option>
+          <option value="medium">{t.fontSizeMedium}</option>
+          <option value="large">{t.fontSizeLarge}</option>
         </select>
       </div>
 

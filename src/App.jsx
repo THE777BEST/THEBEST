@@ -9,6 +9,7 @@ import "./App.css";
 
 const STORAGE_KEYS = {
   favorites: "lugat_favorites",
+  fontSize: "lugat_font_size",
   language: "lugat_language",
   theme: "lugat_theme",
 };
@@ -49,6 +50,13 @@ function App() {
   const [language, setLanguage] = useState(() =>
     readStoredOption(STORAGE_KEYS.language, "uz", ["uz", "en"])
   );
+  const [fontSize, setFontSize] = useState(() =>
+    readStoredOption(STORAGE_KEYS.fontSize, "medium", [
+      "small",
+      "medium",
+      "large",
+    ])
+  );
   const [favorites, setFavorites] = useState(readStoredFavorites);
 
   useEffect(() => {
@@ -59,6 +67,11 @@ function App() {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.language, language);
   }, [language]);
+
+  useEffect(() => {
+    document.documentElement.dataset.fontSize = fontSize;
+    localStorage.setItem(STORAGE_KEYS.fontSize, fontSize);
+  }, [fontSize]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.favorites, JSON.stringify(favorites));
@@ -116,7 +129,9 @@ function App() {
           path="/settings"
           element={
             <Setting
+              fontSize={fontSize}
               language={language}
+              onFontSizeChange={setFontSize}
               onLanguageChange={setLanguage}
               onThemeChange={setTheme}
               theme={theme}
