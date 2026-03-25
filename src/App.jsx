@@ -1,5 +1,11 @@
-import { useEffect, useState } from "react";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+} from "react-router-dom";
 import Navbar from "./Components/navbar/Navbar.jsx";
 import Favorites from "./Pages/Favorites/Favorites.jsx";
 import Search from "./Pages/Search/Search.jsx";
@@ -41,6 +47,94 @@ function readStoredFavorites() {
   } catch {
     return [];
   }
+}
+
+function ExitGuard({ language }) {
+  const location = useLocation();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const allowNextBackRef = useRef(false);
+
+  useEffect(() => {
+    if (location.pathname !== "/") {
+      return;
+    }
+
+    if (!window.history.state?.lugatExitGuard) {
+      window.history.pushState(
+        { ...(window.history.state ?? {}), lugatExitGuard: true },
+        "",
+        window.location.href
+      );
+    }
+
+    function handlePopState() {
+      if (allowNextBackRef.current) {
+        allowNextBackRef.current = false;
+        return;
+      }
+      setIsDialogOpen(true);
+    }
+
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [location.pathname]);
+
+  function stayInApp() {
+    setIsDialogOpen(false);
+    window.history.pushState(
+      { ...(window.history.state ?? {}), lugatExitGuard: true },
+      "",
+      window.location.href
+    );
+  }
+
+  function exitApp() {
+    setIsDialogOpen(false);
+    allowNextBackRef.current = true;
+    window.history.back();
+  }
+
+  if (!isDialogOpen || location.pathname !== "/") {
+    return null;
+  }
+
+  return (
+    <div className="exit-dialog-backdrop" role="presentation">
+      <div
+        className="exit-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="exit-dialog-title"
+      >
+        <h2 id="exit-dialog-title">
+          {language === "en" ? "Exit App?" : "Ilovadan Chiqasizmi?"}
+        </h2>
+        <p>
+          {language === "en"
+            ? "Are you sure you want to exit the app?"
+            : "Aniq ilovadan chiqmoqchimisiz?"}
+        </p>
+        <div className="exit-dialog-actions">
+          <button
+            type="button"
+            className="exit-dialog-btn exit-dialog-btn-secondary"
+            onClick={stayInApp}
+          >
+            {language === "en" ? "No" : "Yo'q"}
+          </button>
+          <button
+            type="button"
+            className="exit-dialog-btn exit-dialog-btn-primary"
+            onClick={exitApp}
+          >
+            {language === "en" ? "Yes" : "Ha"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function App() {
@@ -102,6 +196,7 @@ function App() {
 
   return (
     <BrowserRouter>
+      <ExitGuard language={language} />
       <main>
         <Routes>
           <Route

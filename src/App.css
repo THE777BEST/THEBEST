@@ -63,3 +63,66 @@ main {
   padding: 16px 0 90px;
   width: 100%;
 }
+
+.exit-dialog-backdrop {
+  align-items: center;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 20px;
+  position: fixed;
+  z-index: 1000;
+}
+
+.exit-dialog {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-md);
+  max-width: 360px;
+  padding: 18px;
+  width: 100%;
+}
+
+.exit-dialog h2 {
+  color: var(--text);
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+}
+
+.exit-dialog p {
+  color: var(--text-muted);
+  line-height: 1.45;
+  margin-bottom: 16px;
+}
+
+.exit-dialog-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.exit-dialog-btn {
+  border: 1px solid transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  min-width: 80px;
+  padding: 9px 14px;
+}
+
+.exit-dialog-btn-secondary {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.exit-dialog-btn-primary {
+  background: var(--primary);
+  color: #fff;
+}
+
+.exit-dialog-btn-primary:hover {
+  background: var(--primary-dark);
+}
