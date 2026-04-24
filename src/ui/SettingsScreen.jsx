@@ -1,4 +1,4 @@
-import { SparkBookIcon } from "./Icons.jsx";
+import Coffee from "../Pages/Coffee/Coffee.jsx";
 import { SegmentedControl } from "./SegmentedControl.jsx";
 
 function SettingCard({ children, title }) {
@@ -45,23 +45,8 @@ export function SettingsScreen({
         />
       </SettingCard>
 
-      <SettingCard title={text.settings.aboutTitle}>
-        <div className="rounded-[22px] border border-slate-200/80 bg-slate-50/90 p-4 dark:border-white/10 dark:bg-slate-950/35">
-          <div className="flex items-start gap-4">
-            <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[#3B82F6]/12 text-[#3B82F6] shadow-[0_10px_22px_rgba(59,130,246,0.16)]">
-              <SparkBookIcon className="size-6" />
-            </div>
-
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                Lugat
-              </p>
-              <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                {text.settings.aboutBody}
-              </p>
-            </div>
-          </div>
-        </div>
+      <SettingCard title={text.settings.support}>
+        <Coffee language={appLanguage} />
       </SettingCard>
     </section>
   );
