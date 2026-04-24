@@ -1,22 +1,18 @@
-import { useEffect, useRef, useState } from "react";
-import {
-  BrowserRouter,
-  Navigate,
-  Route,
-  Routes,
-  useLocation,
-} from "react-router-dom";
-import Navbar from "./Components/navbar/Navbar.jsx";
-import Favorites from "./Pages/Favorites/Favorites.jsx";
-import Search from "./Pages/Search/Search.jsx";
-import Setting from "./Pages/setting/Setting.jsx";
+import { useEffect, useMemo, useState } from "react";
+import { useDebouncedValue } from "./hooks/useDebouncedValue.js";
+import { copy } from "./lib/copy.js";
+import { searchDictionary } from "./lib/dictionary.js";
+import { BottomNavigation } from "./ui/BottomNavigation.jsx";
+import { FavoritesScreen } from "./ui/FavoritesScreen.jsx";
+import { SearchScreen } from "./ui/SearchScreen.jsx";
+import { SettingsScreen } from "./ui/SettingsScreen.jsx";
+import { TopBar } from "./ui/TopBar.jsx";
 import { toFavoriteWord } from "./utils/favorites.js";
-import "./App.css";
 
 const STORAGE_KEYS = {
+  appLanguage: "lugat_app_language",
   favorites: "lugat_favorites",
-  fontSize: "lugat_font_size",
-  language: "lugat_language",
+  searchDirection: "lugat_search_direction",
   theme: "lugat_theme",
 };
 
@@ -49,127 +45,87 @@ function readStoredFavorites() {
   }
 }
 
-function ExitGuard({ language }) {
-  const location = useLocation();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const allowNextBackRef = useRef(false);
-
-  useEffect(() => {
-    if (location.pathname !== "/") {
-      return;
-    }
-
-    if (!window.history.state?.lugatExitGuard) {
-      window.history.pushState(
-        { ...(window.history.state ?? {}), lugatExitGuard: true },
-        "",
-        window.location.href
-      );
-    }
-
-    function handlePopState() {
-      if (allowNextBackRef.current) {
-        allowNextBackRef.current = false;
-        return;
-      }
-      setIsDialogOpen(true);
-    }
-
-    window.addEventListener("popstate", handlePopState);
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-    };
-  }, [location.pathname]);
-
-  function stayInApp() {
-    setIsDialogOpen(false);
-    window.history.pushState(
-      { ...(window.history.state ?? {}), lugatExitGuard: true },
-      "",
-      window.location.href
-    );
-  }
-
-  function exitApp() {
-    setIsDialogOpen(false);
-    allowNextBackRef.current = true;
-    window.history.back();
-  }
-
-  if (!isDialogOpen || location.pathname !== "/") {
-    return null;
-  }
-
-  return (
-    <div className="exit-dialog-backdrop" role="presentation">
-      <div
-        className="exit-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="exit-dialog-title"
-      >
-        <h2 id="exit-dialog-title">
-          {language === "en" ? "Exit App?" : "Ilovadan Chiqasizmi?"}
-        </h2>
-        <p>
-          {language === "en"
-            ? "Are you sure you want to exit the app?"
-            : "Aniq ilovadan chiqmoqchimisiz?"}
-        </p>
-        <div className="exit-dialog-actions">
-          <button
-            type="button"
-            className="exit-dialog-btn exit-dialog-btn-secondary"
-            onClick={stayInApp}
-          >
-            {language === "en" ? "No" : "Yo'q"}
-          </button>
-          <button
-            type="button"
-            className="exit-dialog-btn exit-dialog-btn-primary"
-            onClick={exitApp}
-          >
-            {language === "en" ? "Yes" : "Ha"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function App() {
+  const [activeTab, setActiveTab] = useState("search");
   const [theme, setTheme] = useState(() =>
-    readStoredOption(STORAGE_KEYS.theme, "light", ["light", "dark"])
+    readStoredOption(STORAGE_KEYS.theme, "dark", ["light", "dark"])
   );
-  const [language, setLanguage] = useState(() =>
-    readStoredOption(STORAGE_KEYS.language, "uz", ["uz", "en"])
+  const [appLanguage, setAppLanguage] = useState(() =>
+    readStoredOption(STORAGE_KEYS.appLanguage, "en", ["en", "uz"])
   );
-  const [fontSize, setFontSize] = useState(() =>
-    readStoredOption(STORAGE_KEYS.fontSize, "medium", [
-      "small",
-      "medium",
-      "large",
-    ])
+  const [searchDirection, setSearchDirection] = useState(() =>
+    readStoredOption(STORAGE_KEYS.searchDirection, "en", ["en", "uz"])
   );
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
   const [favorites, setFavorites] = useState(readStoredFavorites);
+  const [isSearching, setIsSearching] = useState(false);
+
+  const debouncedQuery = useDebouncedValue(searchQuery, 280);
+  const text = copy[appLanguage];
+  const favoriteIds = useMemo(
+    () => new Set(favorites.map((item) => item.id)),
+    [favorites]
+  );
 
   useEffect(() => {
-    document.body.dataset.theme = theme;
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    document.documentElement.style.colorScheme = theme;
     localStorage.setItem(STORAGE_KEYS.theme, theme);
   }, [theme]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.language, language);
-  }, [language]);
+    localStorage.setItem(STORAGE_KEYS.appLanguage, appLanguage);
+  }, [appLanguage]);
 
   useEffect(() => {
-    document.documentElement.dataset.fontSize = fontSize;
-    localStorage.setItem(STORAGE_KEYS.fontSize, fontSize);
-  }, [fontSize]);
+    localStorage.setItem(STORAGE_KEYS.searchDirection, searchDirection);
+  }, [searchDirection]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.favorites, JSON.stringify(favorites));
   }, [favorites]);
+
+  useEffect(() => {
+    const normalizedQuery = debouncedQuery.trim();
+
+    if (!normalizedQuery) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    let isCancelled = false;
+
+    async function runSearch() {
+      setIsSearching(true);
+
+      try {
+        const nextResults = await searchDictionary(
+          normalizedQuery,
+          searchDirection
+        );
+
+        if (!isCancelled) {
+          setSearchResults(nextResults);
+        }
+      } catch {
+        if (!isCancelled) {
+          setSearchResults([]);
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsSearching(false);
+        }
+      }
+    }
+
+    runSearch();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [debouncedQuery, searchDirection]);
 
   function toggleFavorite(word) {
     const favoriteWord = toFavoriteWord(word);
@@ -182,63 +138,77 @@ function App() {
       if (alreadyFavorite) {
         return prev.filter((item) => item.id !== favoriteWord.id);
       }
+
       return [favoriteWord, ...prev];
     });
-  }
-
-  function removeFavorite(id) {
-    setFavorites((prev) => prev.filter((item) => item.id !== id));
   }
 
   function clearFavorites() {
     setFavorites([]);
   }
 
+  const hasSearchValue = searchQuery.trim().length > 0;
+  const isTyping = hasSearchValue && searchQuery.trim() !== debouncedQuery.trim();
+
   return (
-    <BrowserRouter>
-      <ExitGuard language={language} />
-      <main>
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <Search
-                favorites={favorites}
-                language={language}
-                onToggleFavorite={toggleFavorite}
-              />
-            }
-          />
-          <Route
-            path="/favorites"
-            element={
-              <Favorites
-                favorites={favorites}
-                language={language}
-                onClearFavorites={clearFavorites}
-                onRemoveFavorite={removeFavorite}
-              />
-            }
-          />
-        <Route
-          path="/settings"
-          element={
-            <Setting
-              fontSize={fontSize}
-              language={language}
-              onFontSizeChange={setFontSize}
-              onLanguageChange={setLanguage}
+    <div className="relative min-h-screen overflow-hidden bg-[linear-gradient(180deg,#eff6ff_0%,#dbeafe_42%,#bfdbfe_100%)] text-slate-900 transition-colors duration-300 dark:bg-[linear-gradient(180deg,#0f2027_0%,#203a43_48%,#2c5364_100%)] dark:text-slate-50">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute left-1/2 top-[-7rem] h-52 w-52 -translate-x-1/2 rounded-full bg-[#3B82F6]/25 blur-3xl dark:bg-[#3B82F6]/35" />
+        <div className="absolute bottom-10 left-[-3rem] h-44 w-44 rounded-full bg-cyan-300/20 blur-3xl dark:bg-cyan-400/15" />
+        <div className="absolute bottom-24 right-[-4rem] h-60 w-60 rounded-full bg-sky-400/15 blur-3xl dark:bg-sky-500/20" />
+      </div>
+
+      <div className="relative mx-auto min-h-screen w-full max-w-[430px] px-4">
+        <TopBar
+          activeTab={activeTab}
+          onSearchDirectionChange={setSearchDirection}
+          onSearchQueryChange={setSearchQuery}
+          searchDirection={searchDirection}
+          searchQuery={searchQuery}
+          text={text}
+        />
+
+        <main className="pb-[calc(env(safe-area-inset-bottom)+7.25rem)] pt-[calc(env(safe-area-inset-top)+7.25rem)]">
+          {activeTab === "search" ? (
+            <SearchScreen
+              favoriteIds={favoriteIds}
+              isSearching={isSearching}
+              isTyping={isTyping}
+              onToggleFavorite={toggleFavorite}
+              query={searchQuery}
+              results={searchResults}
+              searchDirection={searchDirection}
+              text={text}
+            />
+          ) : null}
+
+          {activeTab === "favorites" ? (
+            <FavoritesScreen
+              favorites={favorites}
+              onClearFavorites={clearFavorites}
+              onToggleFavorite={toggleFavorite}
+              text={text}
+            />
+          ) : null}
+
+          {activeTab === "settings" ? (
+            <SettingsScreen
+              appLanguage={appLanguage}
+              onLanguageChange={setAppLanguage}
               onThemeChange={setTheme}
+              text={text}
               theme={theme}
             />
-          }
+          ) : null}
+        </main>
+
+        <BottomNavigation
+          activeTab={activeTab}
+          onChange={setActiveTab}
+          text={text}
         />
-        <Route path="/coffee" element={<Navigate replace to="/settings" />} />
-        <Route path="*" element={<Navigate replace to="/" />} />
-      </Routes>
-    </main>
-      <Navbar language={language} />
-    </BrowserRouter>
+      </div>
+    </div>
   );
 }
 
