@@ -1,9 +1,9 @@
-import Coffee from "../Pages/Coffee/Coffee.jsx";
+import { SparkBookIcon } from "./Icons.jsx";
 import { SegmentedControl } from "./SegmentedControl.jsx";
 
 function SettingCard({ children, title }) {
   return (
-    <section className="rounded-[28px] border border-slate-200/70 bg-white/78 p-5 shadow-[0_16px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-white/10 dark:bg-white/10 dark:shadow-[0_18px_45px_rgba(2,12,25,0.3)]">
+    <section className="rounded-[26px] border border-slate-200/80 bg-white/88 p-5 shadow-[0_10px_24px_rgba(15,23,42,0.07)] dark:border-white/10 dark:bg-white/[0.08] dark:shadow-[0_12px_28px_rgba(2,12,25,0.22)]">
       <h2 className="text-base font-semibold text-slate-900 dark:text-white">
         {title}
       </h2>
@@ -45,8 +45,23 @@ export function SettingsScreen({
         />
       </SettingCard>
 
-      <SettingCard title={text.settings.support}>
-        <Coffee language={appLanguage} />
+      <SettingCard title={text.settings.aboutTitle}>
+        <div className="rounded-[22px] border border-slate-200/80 bg-slate-50/90 p-4 dark:border-white/10 dark:bg-slate-950/35">
+          <div className="flex items-start gap-4">
+            <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[#3B82F6]/12 text-[#3B82F6] shadow-[0_10px_22px_rgba(59,130,246,0.16)]">
+              <SparkBookIcon className="size-6" />
+            </div>
+
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                Lugat
+              </p>
+              <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                {text.settings.aboutBody}
+              </p>
+            </div>
+          </div>
+        </div>
       </SettingCard>
     </section>
   );
